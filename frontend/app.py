@@ -3,10 +3,11 @@ import streamlit as st
 from backend.engine.game import Game
 
 
-@st.cache_resource
-def get_game(schema_version: int = 2) -> Game:
-    # Bump this version when the Game object shape changes so Streamlit does not reuse stale state.
-    return Game(seed=7)
+def get_game() -> Game:
+    cached_game = st.session_state.get("game")
+    if cached_game is None or not hasattr(cached_game, "scenes"):
+        st.session_state["game"] = Game(seed=7)
+    return st.session_state["game"]
 
 
 game = get_game()
@@ -32,7 +33,7 @@ with st.sidebar:
     st.write(f"场景：{snapshot['current_scene']}")
     developer_mode = st.toggle("开发者模式", value=False)
     if st.button("重新开始"):
-        get_game.clear()
+        st.session_state.pop("game", None)
         st.rerun()
     if st.button("结束白天"):
         game.end_day()
