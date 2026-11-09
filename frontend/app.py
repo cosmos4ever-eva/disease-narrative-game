@@ -16,10 +16,15 @@ with st.sidebar:
     st.subheader("游戏状态")
     snapshot = game.snapshot()
     st.write(f"Day {snapshot['day']} · Tick {snapshot['tick']}")
+    st.write(f"阶段：{'白天' if snapshot['phase'] == 'day' else '夜晚'}")
+    st.write(f"行动力：{snapshot['action_points']} / {snapshot['max_action_points']}")
     st.write(f"场景：{snapshot['current_scene']}")
     developer_mode = st.toggle("开发者模式", value=False)
     if st.button("重新开始"):
         get_game.clear()
+        st.rerun()
+    if st.button("结束白天"):
+        game.end_day()
         st.rerun()
 
 left, right = st.columns([1, 2])
@@ -30,7 +35,10 @@ with left:
     claim_id = st.selectbox("验证 Claim", [claim["claim_id"] for claim in game.claims])
     if st.button("调查线索"):
         result = game.investigate(claim_id)
-        st.success(f"已验证：{result['claim_id']}，真值：{result['truth']}")
+        if result.get("valid"):
+            st.success(f"已验证：{result['claim_id']}，真值：{result['truth']}")
+        else:
+            st.warning(result["impact"])
 
 with right:
     st.subheader("对话")

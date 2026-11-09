@@ -61,3 +61,10 @@ def advance_time(state: GameState, npc_configs: list[dict[str, Any]]) -> None:
                 if npc["exposure_count"] >= 3:
                     npc["infection_state"] = "confirmed"
     evaluate_ending(state)
+
+
+def consume_action(state: GameState) -> bool:
+    if state.phase != "day" or state.action_points <= 0 or state.status != "running":
+        return False
+    state.action_points -= 1
+    return True

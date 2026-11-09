@@ -7,6 +7,9 @@ class GameState:
     seed: int
     day: int = 1
     tick: int = 0
+    phase: str = "day"
+    action_points: int = 3
+    max_action_points: int = 3
     current_scene: str = "camp"
     status: str = "running"
     source_sealed: bool = False
@@ -21,6 +24,9 @@ class GameState:
             "seed": self.seed,
             "day": self.day,
             "tick": self.tick,
+            "phase": self.phase,
+            "action_points": self.action_points,
+            "max_action_points": self.max_action_points,
             "current_scene": self.current_scene,
             "status": self.status,
             "source_sealed": self.source_sealed,

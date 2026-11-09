@@ -14,7 +14,8 @@ def test_dialogue_writes_memory_and_advances_time():
     before = game.snapshot()["tick"]
     response = game.ask("agent_willow", "你知道感染源吗？")
     assert response["action"] in {"answer", "evade", "reveal"}
-    assert game.snapshot()["tick"] == before + 1
+    assert game.snapshot()["tick"] == before
+    assert game.snapshot()["action_points"] == 2
     assert game.agents["agent_willow"].memory.memories[-1].source == "player_action"
 
 
@@ -44,7 +45,24 @@ def test_wrong_accusation_ends_game():
 def test_time_limit_ends_game_without_sealing_source():
     game = Game(seed=123)
     for _ in range(8):
-        game.ask("agent_wilson", "你知道什么？")
+        game.end_day()
         if game.snapshot()["status"] == "ending_bad":
             break
     assert game.snapshot()["status"] == "ending_bad"
+
+
+def test_ending_day_discards_unused_points_and_resets_next_day():
+    game = Game(seed=123)
+    game.end_day()
+    snapshot = game.snapshot()
+    assert snapshot["day"] == 2
+    assert snapshot["phase"] == "day"
+    assert snapshot["action_points"] == 3
+    assert snapshot["event_log"][-1]["type"] == "day_started"
+
+
+def test_invalid_claim_does_not_consume_action_point():
+    game = Game(seed=123)
+    result = game.investigate("unknown_claim")
+    assert result["valid"] is False
+    assert game.snapshot()["action_points"] == 3
