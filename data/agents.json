@@ -1,0 +1,7 @@
+[
+  {"agent_id": "agent_wilson", "name": "Wilson", "initial_scene": "camp", "initial_infection": "uninfected", "initial_trust": 55, "secret": "发现过异常孢子"},
+  {"agent_id": "agent_willow", "name": "Willow", "initial_scene": "forest_edge", "initial_infection": "latent", "initial_trust": 35, "secret": "烧毁过发光藤蔓"},
+  {"agent_id": "agent_wendy", "name": "Wendy", "initial_scene": "graveyard", "initial_infection": "uninfected", "initial_trust": 50, "secret": "见过遗物附近的异常"},
+  {"agent_id": "agent_wolfgang", "name": "Wolfgang", "initial_scene": "camp", "initial_infection": "uninfected", "initial_trust": 45, "secret": "见过有人带回石匣"},
+  {"agent_id": "agent_maxwell", "name": "Maxwell", "initial_scene": "ruins_path", "initial_infection": "latent", "initial_trust": 25, "secret": "最先接触暗影遗物"}
+]

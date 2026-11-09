@@ -1,0 +1,8 @@
+[
+  {"claim_id": "claim_001", "content": "昨晚有人从遗迹小路带回了黑色石匣", "truth": true, "impact": "解锁追踪石匣"},
+  {"claim_id": "claim_003", "content": "发光藤蔓被火烧过", "truth": true, "impact": "证明 Willow 到过现场"},
+  {"claim_id": "claim_006", "content": "Maxwell 从未碰过黑色石匣", "truth": false, "impact": "解锁最终质问"},
+  {"claim_id": "claim_008", "content": "潜伏感染者也可能传播疫病", "truth": true, "impact": "获得关键机制线索"},
+  {"claim_id": "claim_010", "content": "石匣最早出现在 ruins_path 的裂缝旁", "truth": true, "impact": "解锁源头判定"},
+  {"claim_id": "claim_012", "content": "封存石匣可阻断新增感染，但不能治愈已感染者", "truth": true, "impact": "决定结局"}
+]
