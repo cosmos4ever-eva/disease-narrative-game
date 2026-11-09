@@ -13,6 +13,7 @@ class Game:
         random.seed(seed)
         self.agents_config = load_json("agents.json")
         self.claims = load_json("claims.json")
+        self.scenes = {scene["scene_id"]: scene for scene in load_json("scenes.json")}
         memories = load_json("memories.json")
         self.state = GameState(seed=seed)
         self.agents = {}
@@ -22,7 +23,7 @@ class Game:
             self.agents[config["agent_id"]] = MockNPCAgent(config, memories.get(config["agent_id"], []))
 
     def ask(self, agent_id: str, text: str) -> dict[str, Any]:
-        if agent_id not in self.agents or not consume_action(self.state):
+        if agent_id not in self.agents or self.state.npc_states[agent_id]["scene"] != self.state.current_scene or not consume_action(self.state):
             return {"action": "invalid", "dialogue": "当前无法执行这个行动。", "reason": "action_not_allowed"}
         response = self.agents[agent_id].respond(text, self.state.npc_states[agent_id])
         self.state.event_log.append({"type": "dialogue", "agent_id": agent_id, "text": text, "action": response["action"]})
@@ -36,10 +37,28 @@ class Game:
         if claim is None:
             self.state.action_points += 1
             return {"claim_id": claim_id, "truth": None, "impact": "未知 Claim。", "valid": False}
+        if claim.get("scene") != self.state.current_scene:
+            self.state.action_points += 1
+            return {"claim_id": claim_id, "truth": None, "impact": "这个线索不属于当前场景。", "valid": False}
         result = verify_claim(self.state, claim)
         result["valid"] = True
         self._finish_action()
         return result
+
+    def move_to(self, scene_id: str) -> dict[str, Any]:
+        if scene_id not in self.scenes:
+            return {"valid": False, "impact": "未知场景。"}
+        if scene_id == self.state.current_scene:
+            return {"valid": False, "impact": "你已经在这个场景。"}
+        if scene_id not in self.scenes[self.state.current_scene]["connections"]:
+            return {"valid": False, "impact": "这个场景目前无法直接到达。"}
+        if not consume_action(self.state):
+            return {"valid": False, "impact": "当前无法移动。"}
+        previous = self.state.current_scene
+        self.state.current_scene = scene_id
+        self.state.event_log.append({"type": "move", "from": previous, "to": scene_id})
+        self._finish_action()
+        return {"valid": True, "from": previous, "to": scene_id}
 
     def seal(self) -> bool:
         if self.state.phase != "day" or self.state.status != "running":

@@ -12,18 +12,19 @@ def test_game_has_fixed_seed_and_initial_agents():
 def test_dialogue_writes_memory_and_advances_time():
     game = Game(seed=123)
     before = game.snapshot()["tick"]
+    game.move_to("forest_edge")
     response = game.ask("agent_willow", "你知道感染源吗？")
     assert response["action"] in {"answer", "evade", "reveal"}
     assert game.snapshot()["tick"] == before
-    assert game.snapshot()["action_points"] == 2
+    assert game.snapshot()["action_points"] == 1
     assert game.agents["agent_willow"].memory.memories[-1].source == "player_action"
 
 
 def test_claim_verification_is_recorded():
     game = Game(seed=123)
-    result = game.investigate("claim_010")
+    result = game.investigate("claim_001")
     assert result["truth"] is True
-    assert "claim_010" in game.snapshot()["discovered_claims"]
+    assert "claim_001" in game.snapshot()["discovered_claims"]
 
 
 def test_good_ending_requires_source_claims_and_sealing():
@@ -32,6 +33,7 @@ def test_good_ending_requires_source_claims_and_sealing():
     assert game.seal() is False
     assert game.snapshot()["status"] == "running"
 
+    game.move_to("ruins_path")
     game.investigate("claim_010")
     assert game.seal() is True
     assert game.snapshot()["status"] == "ending_good"
@@ -65,4 +67,19 @@ def test_invalid_claim_does_not_consume_action_point():
     game = Game(seed=123)
     result = game.investigate("unknown_claim")
     assert result["valid"] is False
+    assert game.snapshot()["action_points"] == 3
+
+
+def test_move_requires_connected_scene_and_consumes_action_point():
+    game = Game(seed=123)
+    result = game.move_to("forest_edge")
+    assert result["valid"] is True
+    assert game.snapshot()["current_scene"] == "forest_edge"
+    assert game.snapshot()["action_points"] == 2
+
+
+def test_dialogue_requires_npc_in_current_scene():
+    game = Game(seed=123)
+    response = game.ask("agent_willow", "你知道什么？")
+    assert response["action"] == "invalid"
     assert game.snapshot()["action_points"] == 3

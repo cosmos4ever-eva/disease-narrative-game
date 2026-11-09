@@ -1,0 +1,7 @@
+[
+  {"scene_id": "camp", "name": "营地", "symbol": "🔥", "tone": "warm", "description": "营火、帐篷和 Wilson 的实验台。", "connections": ["forest_edge", "graveyard", "ruins_path"]},
+  {"scene_id": "forest_edge", "name": "森林边缘", "symbol": "🌲", "tone": "green", "description": "发光藤蔓沿着潮湿的林线蔓延。", "connections": ["camp"]},
+  {"scene_id": "graveyard", "name": "墓地", "symbol": "🪦", "tone": "violet", "description": "冷雾覆盖墓碑，空气里有微弱的低语。", "connections": ["camp"]},
+  {"scene_id": "ruins_path", "name": "遗迹小路", "symbol": "🗿", "tone": "stone", "description": "碎石路通向一道不自然的黑色裂缝。", "connections": ["camp"]},
+  {"scene_id": "isolated_camp", "name": "隔离区", "symbol": "⛺", "tone": "amber", "description": "临时搭建的隔离帐篷，远离主营火。", "connections": ["camp"]}
+]
