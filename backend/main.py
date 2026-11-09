@@ -13,6 +13,10 @@ class AskRequest(BaseModel):
     text: str
 
 
+class MoveRequest(BaseModel):
+    scene_id: str
+
+
 @app.get("/health")
 def health() -> dict[str, str]:
     return {"status": "ok"}
@@ -28,3 +32,8 @@ def ask(request: AskRequest) -> dict:
     if request.agent_id not in game.agents:
         raise HTTPException(status_code=404, detail="Unknown agent")
     return game.ask(request.agent_id, request.text)
+
+
+@app.post("/move")
+def move(request: MoveRequest) -> dict:
+    return game.move_to(request.scene_id)
