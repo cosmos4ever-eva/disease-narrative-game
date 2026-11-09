@@ -4,7 +4,8 @@ from backend.engine.game import Game
 
 
 @st.cache_resource
-def get_game() -> Game:
+def get_game(schema_version: int = 2) -> Game:
+    # Bump this version when the Game object shape changes so Streamlit does not reuse stale state.
     return Game(seed=7)
 
 
