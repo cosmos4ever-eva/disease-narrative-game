@@ -3,7 +3,7 @@ from typing import Any
 
 from ..agents.npc_agent import MockNPCAgent
 from ..data_loader import load_json
-from .rules import advance_time, verify_claim
+from .rules import advance_time, accuse, seal_source, verify_claim
 from .state import GameState
 
 
@@ -31,6 +31,12 @@ class Game:
         result = verify_claim(self.state, claim)
         advance_time(self.state, self.agents_config)
         return result
+
+    def seal(self) -> bool:
+        return seal_source(self.state)
+
+    def accuse(self, agent_id: str) -> str:
+        return accuse(self.state, agent_id)
 
     def snapshot(self) -> dict[str, Any]:
         return self.state.to_dict()

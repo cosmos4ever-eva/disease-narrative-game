@@ -9,6 +9,8 @@ class GameState:
     tick: int = 0
     current_scene: str = "camp"
     status: str = "running"
+    source_sealed: bool = False
+    accused_agent_id: str | None = None
     discovered_claims: set[str] = field(default_factory=set)
     discovered_items: set[str] = field(default_factory=set)
     npc_states: dict[str, dict[str, Any]] = field(default_factory=dict)
@@ -21,6 +23,8 @@ class GameState:
             "tick": self.tick,
             "current_scene": self.current_scene,
             "status": self.status,
+            "source_sealed": self.source_sealed,
+            "accused_agent_id": self.accused_agent_id,
             "discovered_claims": sorted(self.discovered_claims),
             "discovered_items": sorted(self.discovered_items),
             "npc_states": self.npc_states,
