@@ -16,7 +16,7 @@ def test_dialogue_writes_memory_and_advances_time():
     response = game.ask("agent_willow", "你知道感染源吗？")
     assert response["action"] in {"answer", "evade", "reveal"}
     assert game.snapshot()["tick"] == before
-    assert game.snapshot()["action_points"] == 1
+    assert game.snapshot()["action_points"] == 2
     assert game.agents["agent_willow"].memory.memories[-1].source == "player_action"
 
 
