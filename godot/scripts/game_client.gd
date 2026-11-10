@@ -14,3 +14,7 @@ func get_state() -> void:
 func move_to(scene_id: String) -> void:
 	var payload := JSON.stringify({"scene_id": scene_id})
 	http.request(API_BASE + "/move", ["Content-Type: application/json"], HTTPClient.METHOD_POST, payload)
+
+func ask(agent_id: String, text: String) -> void:
+	var payload := JSON.stringify({"agent_id": agent_id, "text": text})
+	http.request(API_BASE + "/ask", ["Content-Type: application/json"], HTTPClient.METHOD_POST, payload)

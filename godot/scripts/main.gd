@@ -13,6 +13,17 @@ var scenes: Dictionary = {}
 var scene_grid: HBoxContainer
 var status_label: Label
 var description_label: Label
+var npc_list: VBoxContainer
+var dialogue_label: Label
+var question_input: LineEdit
+var selected_agent_id := ""
+var agent_names := {
+	"agent_wilson": "Wilson",
+	"agent_willow": "Willow",
+	"agent_wendy": "Wendy",
+	"agent_wolfgang": "Wolfgang",
+	"agent_maxwell": "Maxwell"
+}
 
 func _ready() -> void:
 	build_shell()
@@ -38,7 +49,7 @@ func build_shell() -> void:
 	margin.add_child(column)
 
 	var title := Label.new()
-	title.text = "疫病推理游戏"
+	title.text = "暗影疫病：第一夜"
 	title.add_theme_font_size_override("font_size", 40)
 	column.add_child(title)
 
@@ -50,6 +61,16 @@ func build_shell() -> void:
 	description_label.add_theme_font_size_override("font_size", 20)
 	column.add_child(description_label)
 
+	var backdrop := PanelContainer.new()
+	backdrop.custom_minimum_size = Vector2(0, 150)
+	column.add_child(backdrop)
+	var backdrop_text := Label.new()
+	backdrop_text.name = "BackdropText"
+	backdrop_text.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	backdrop_text.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	backdrop_text.add_theme_font_size_override("font_size", 36)
+	backdrop.add_child(backdrop_text)
+
 	scene_grid = HBoxContainer.new()
 	scene_grid.add_theme_constant_override("separation", 16)
 	column.add_child(scene_grid)
@@ -59,20 +80,39 @@ func build_shell() -> void:
 	column.add_child(lower)
 
 	var evidence_panel := PanelContainer.new()
-	evidence_panel.custom_minimum_size = Vector2(420, 260)
+	evidence_panel.custom_minimum_size = Vector2(360, 260)
 	lower.add_child(evidence_panel)
-	var evidence_text := Label.new()
-	evidence_text.text = "场景证据\n\n点击场景卡片移动。\n移动会消耗 1 点行动力。\n当前版本先接入规则和场景导航。"
-	evidence_text.add_theme_font_size_override("font_size", 19)
-	evidence_panel.add_child(evidence_text)
+	var evidence_column := VBoxContainer.new()
+	evidence_panel.add_child(evidence_column)
+	var evidence_title := Label.new()
+	evidence_title.text = "当前场景中的角色"
+	evidence_title.add_theme_font_size_override("font_size", 21)
+	evidence_column.add_child(evidence_title)
+	npc_list = VBoxContainer.new()
+	evidence_column.add_child(npc_list)
 
 	var dialogue_panel := PanelContainer.new()
 	dialogue_panel.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	lower.add_child(dialogue_panel)
-	var dialogue_text := Label.new()
-	dialogue_text.text = "对话区\n\n下一步接入 NPC Agent 对话。"
-	dialogue_text.add_theme_font_size_override("font_size", 19)
-	dialogue_panel.add_child(dialogue_text)
+	var dialogue_column := VBoxContainer.new()
+	dialogue_panel.add_child(dialogue_column)
+	var dialogue_title := Label.new()
+	dialogue_title.text = "Agent 对话"
+	dialogue_title.add_theme_font_size_override("font_size", 21)
+	dialogue_column.add_child(dialogue_title)
+	dialogue_label = Label.new()
+	dialogue_label.text = "点击左侧角色开始对话。"
+	dialogue_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	dialogue_label.custom_minimum_size = Vector2(0, 130)
+	dialogue_label.add_theme_font_size_override("font_size", 19)
+	dialogue_column.add_child(dialogue_label)
+	question_input = LineEdit.new()
+	question_input.placeholder_text = "输入你想问的问题"
+	dialogue_column.add_child(question_input)
+	var ask_button := Button.new()
+	ask_button.text = "发送问题"
+	ask_button.pressed.connect(_ask_selected_agent)
+	dialogue_column.add_child(ask_button)
 
 func render_scenes() -> void:
 	for child in scene_grid.get_children():
@@ -114,6 +154,21 @@ func render_scenes() -> void:
 		move.pressed.connect(func() -> void: GameClient.move_to(scene_id))
 		content.add_child(move)
 
+	for child in npc_list.get_children():
+		child.queue_free()
+	var nearby_agents: Array[String] = []
+	for agent_id in state.get("npc_states", {}):
+		if state["npc_states"][agent_id].get("scene") == state.get("current_scene", "camp"):
+			nearby_agents.append(agent_id)
+	for agent_id in nearby_agents:
+		var npc_button := Button.new()
+		npc_button.text = agent_names.get(agent_id, agent_id)
+		npc_button.pressed.connect(func() -> void:
+			selected_agent_id = agent_id
+			dialogue_label.text = "你正在和 %s 对话。" % agent_names.get(agent_id, agent_id)
+		)
+		npc_list.add_child(npc_button)
+
 func _on_api_response(_result: int, response_code: int, _headers: PackedStringArray, body: PackedByteArray) -> void:
 	if response_code != 200:
 		status_label.text = "后端连接失败：" + str(response_code)
@@ -125,6 +180,21 @@ func _on_api_response(_result: int, response_code: int, _headers: PackedStringAr
 		status_label.text = "第 %d 天 · %s · 行动力 %d/%d · 当前场景：%s" % [state.get("day", 1), "白天" if state.get("phase") == "day" else "夜晚", state.get("action_points", 0), state.get("max_action_points", 3), state.get("current_scene", "camp")]
 		description_label.text = scenes.get(state.get("current_scene", "camp"), {}).get("description", "")
 		render_scenes()
+		var backdrop_text := get_node_or_null("MarginContainer/VBoxContainer/PanelContainer/BackdropText")
+		if backdrop_text:
+			backdrop_text.text = "%s  %s" % [scenes.get(state.get("current_scene", "camp"), {}).get("symbol", ""), scenes.get(state.get("current_scene", "camp"), {}).get("name", "")]
+	elif parsed is Dictionary and parsed.has("dialogue"):
+		dialogue_label.text = parsed["dialogue"]
+	elif parsed is Dictionary and parsed.has("valid"):
+		GameClient.get_state()
+
+func _ask_selected_agent() -> void:
+	if selected_agent_id == "" or question_input.text.strip_edges() == "":
+		dialogue_label.text = "请先选择一个 NPC，并输入问题。"
+		return
+	dialogue_label.text = "对方正在回忆……"
+	GameClient.ask(selected_agent_id, question_input.text.strip_edges())
+	question_input.clear()
 
 func load_scene_data() -> Dictionary:
 	var file := FileAccess.open("res://scenes.json", FileAccess.READ)
