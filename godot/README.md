@@ -8,7 +8,7 @@
 2. 在项目根目录启动后端：
 
 ```powershell
-uvicorn backend.main:app --reload
+uvicorn backend.main:app --host 127.0.0.1 --port 8010
 ```
 
 3. 在 Godot 中导入 `godot/project.godot` 并运行项目。
