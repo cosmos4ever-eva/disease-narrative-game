@@ -206,6 +206,7 @@ func render_scenes() -> void:
 	for agent_id in nearby_agents:
 		var npc_button := Button.new()
 		npc_button.text = agent_names.get(agent_id, agent_id)
+		npc_button.focus_mode = Control.FOCUS_ALL
 		npc_button.pressed.connect(_on_npc_selected.bind(agent_id))
 		npc_list.add_child(npc_button)
 
@@ -215,7 +216,8 @@ func _on_move_pressed(scene_id: String) -> void:
 
 func _on_npc_selected(agent_id: String) -> void:
 	selected_agent_id = agent_id
-	dialogue_label.text = "你正在和 %s 对话。" % agent_names.get(agent_id, agent_id)
+	dialogue_label.text = "你正在和 %s 对话。请输入问题。" % agent_names.get(agent_id, agent_id)
+	question_input.grab_focus()
 
 func _on_api_response(_result: int, response_code: int, _headers: PackedStringArray, body: PackedByteArray) -> void:
 	if response_code != 200:
