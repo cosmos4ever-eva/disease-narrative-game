@@ -1,8 +1,10 @@
 [
   {"claim_id": "claim_001", "content": "昨晚有人从遗迹小路带回了黑色石匣", "truth": true, "impact": "解锁追踪石匣", "scene": "camp"},
   {"claim_id": "claim_003", "content": "发光藤蔓被火烧过", "truth": true, "impact": "证明 Willow 到过现场", "scene": "forest_edge"},
+  {"claim_id": "claim_005", "content": "Wendy 听到 Abigail 提到会呼吸的石头", "truth": true, "impact": "指向暗影遗物", "scene": "graveyard"},
   {"claim_id": "claim_006", "content": "Maxwell 从未碰过黑色石匣", "truth": false, "impact": "解锁最终质问", "scene": "ruins_path"},
   {"claim_id": "claim_008", "content": "潜伏感染者也可能传播疫病", "truth": true, "impact": "获得关键机制线索", "scene": "camp"},
   {"claim_id": "claim_010", "content": "石匣最早出现在 ruins_path 的裂缝旁", "truth": true, "impact": "解锁源头判定", "scene": "ruins_path"},
+  {"claim_id": "claim_011", "content": "墓地冷斑出现在石匣被带回之后", "truth": true, "impact": "建立传播时间线", "scene": "graveyard"},
   {"claim_id": "claim_012", "content": "封存石匣可阻断新增感染，但不能治愈已感染者", "truth": true, "impact": "决定结局", "scene": "camp"}
 ]

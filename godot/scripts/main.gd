@@ -17,6 +17,8 @@ var npc_list: VBoxContainer
 var dialogue_label: Label
 var question_input: LineEdit
 var backdrop_text: Label
+var story_text: Label
+var story_actions: HBoxContainer
 var selected_agent_id := ""
 var agent_names := {
 	"agent_wilson": "Wilson",
@@ -98,6 +100,14 @@ func build_shell() -> void:
 	description_label = Label.new()
 	description_label.add_theme_font_size_override("font_size", 20)
 	column.add_child(description_label)
+
+	story_text = Label.new()
+	story_text.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	story_text.add_theme_font_size_override("font_size", 19)
+	column.add_child(story_text)
+	story_actions = HBoxContainer.new()
+	story_actions.add_theme_constant_override("separation", 10)
+	column.add_child(story_actions)
 
 	var backdrop := PanelContainer.new()
 	backdrop.custom_minimum_size = Vector2(0, 150)
@@ -197,13 +207,19 @@ func render_scenes() -> void:
 		var target_scene_id: String = scene_id
 		move.pressed.connect(Callable(self, "_on_move_pressed").bind(target_scene_id))
 		move.focus_entered.connect(Callable(self, "_on_scene_focus").bind(target_scene_id))
+		var is_unlocked: bool = scene_id in state.get("unlocked_scenes", ["camp"])
+		if not is_current and not is_unlocked:
+			move.text = "未解锁"
+		if not is_current and is_unlocked and not is_reachable:
+			move.text = "不可直达"
+		move.disabled = is_current or not is_unlocked or not is_reachable
 		content.add_child(move)
 
 	for child in npc_list.get_children():
 		child.queue_free()
 	var nearby_agents: Array[String] = []
 	for agent_id in state.get("npc_states", {}):
-		if state["npc_states"][agent_id].get("scene") == state.get("current_scene", "camp"):
+		if agent_id in state.get("unlocked_agents", []) and state["npc_states"][agent_id].get("scene") == state.get("current_scene", "camp"):
 			nearby_agents.append(agent_id)
 	for agent_id in nearby_agents:
 		var npc_button := Button.new()
@@ -235,6 +251,7 @@ func _on_api_response(_result: int, response_code: int, _headers: PackedStringAr
 	if parsed is Dictionary and parsed.has("npc_states"):
 		state = parsed
 		scenes = load_scene_data()
+		render_story(parsed.get("story", {}))
 		status_label.text = "第 %d 天 · %s · 行动力 %d/%d · 当前场景：%s" % [state.get("day", 1), "白天" if state.get("phase") == "day" else "夜晚", state.get("action_points", 0), state.get("max_action_points", 3), state.get("current_scene", "camp")]
 		description_label.text = scenes.get(state.get("current_scene", "camp"), {}).get("description", "")
 		render_scenes()
@@ -257,6 +274,28 @@ func _ask_selected_agent() -> void:
 	question_input.editable = false
 	GameClient.ask(selected_agent_id, question_input.text.strip_edges())
 	question_input.clear()
+
+func render_story(story: Dictionary) -> void:
+	if story_text == null or story_actions == null:
+		return
+	story_text.text = story.get("narration", "")
+	for child in story_actions.get_children():
+		child.queue_free()
+	var action_labels := {
+		"ask_wilson": "询问 Wilson",
+		"inspect_lab": "调查实验台",
+		"ask_wolfgang": "询问 Wolfgang"
+	}
+	for action_id in ["ask_wilson", "inspect_lab", "ask_wolfgang"]:
+		var action_button := Button.new()
+		action_button.text = action_labels[action_id]
+		action_button.disabled = action_id in story.get("completed_actions", []) or state.get("phase") != "day"
+		action_button.pressed.connect(Callable(self, "_on_story_action").bind(action_id))
+		story_actions.add_child(action_button)
+
+func _on_story_action(action_id: String) -> void:
+	status_label.text = "正在推进剧情……"
+	GameClient.story_action(action_id)
 
 func load_scene_data() -> Dictionary:
 	var file := FileAccess.open("res://scenes.json", FileAccess.READ)

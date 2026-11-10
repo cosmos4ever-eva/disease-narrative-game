@@ -13,6 +13,7 @@ class Game:
         random.seed(seed)
         self.agents_config = load_json("agents.json")
         self.claims = load_json("claims.json")
+        self.story_nodes = load_json("story_nodes.json")
         self.scenes = {scene["scene_id"]: scene for scene in load_json("scenes.json")}
         memories = load_json("memories.json")
         self.state = GameState(seed=seed)
@@ -23,10 +24,12 @@ class Game:
             self.agents[config["agent_id"]] = MockNPCAgent(config, memories.get(config["agent_id"], []))
 
     def ask(self, agent_id: str, text: str) -> dict[str, Any]:
-        if agent_id not in self.agents or self.state.npc_states[agent_id]["scene"] != self.state.current_scene or not consume_action(self.state):
+        if agent_id not in self.agents or agent_id not in self.state.unlocked_agents or self.state.npc_states[agent_id]["scene"] != self.state.current_scene or not consume_action(self.state):
             return {"action": "invalid", "dialogue": "当前无法执行这个行动。", "reason": "action_not_allowed"}
         response = self.agents[agent_id].respond(text, self.state.npc_states[agent_id])
         self.state.event_log.append({"type": "dialogue", "agent_id": agent_id, "text": text, "action": response["action"]})
+        if agent_id in {"agent_wilson", "agent_wolfgang"}:
+            self._complete_story_action("ask_wilson" if agent_id == "agent_wilson" else "ask_wolfgang")
         self._finish_action()
         return response
 
@@ -41,6 +44,7 @@ class Game:
             self.state.action_points += 1
             return {"claim_id": claim_id, "truth": None, "impact": "这个线索不属于当前场景。", "valid": False}
         result = verify_claim(self.state, claim)
+        self._update_story_unlocks()
         result["valid"] = True
         self._finish_action()
         return result
@@ -48,6 +52,8 @@ class Game:
     def move_to(self, scene_id: str) -> dict[str, Any]:
         if scene_id not in self.scenes:
             return {"valid": False, "impact": "未知场景。"}
+        if scene_id not in self.state.unlocked_scenes:
+            return {"valid": False, "impact": "这个场景还没有开放。"}
         if scene_id == self.state.current_scene:
             return {"valid": False, "impact": "你已经在这个场景。"}
         if scene_id not in self.scenes[self.state.current_scene]["connections"]:
@@ -59,6 +65,43 @@ class Game:
         self.state.event_log.append({"type": "move", "from": previous, "to": scene_id})
         save_state(self.snapshot())
         return {"valid": True, "from": previous, "to": scene_id}
+
+    def story_action(self, action_id: str) -> dict[str, Any]:
+        if action_id not in {"ask_wilson", "inspect_lab", "ask_wolfgang"}:
+            return {"valid": False, "impact": "未知剧情行动。"}
+        if action_id in self.state.story_actions_completed:
+            return {"valid": False, "impact": "这个行动已经完成。"}
+        if not consume_action(self.state):
+            return {"valid": False, "impact": "今天的行动力已经用完。"}
+        self._complete_story_action(action_id)
+        self.state.event_log.append({"type": "story_action", "action_id": action_id})
+        self._finish_action()
+        return {"valid": True, "action_id": action_id, "story": self.story_progress()}
+
+    def _complete_story_action(self, action_id: str) -> None:
+        self.state.story_actions_completed.add(action_id)
+        if len(self.state.story_actions_completed.intersection({"ask_wilson", "inspect_lab", "ask_wolfgang"})) >= 2:
+            self.state.unlocked_scenes.update({"forest_edge", "graveyard"})
+            self.state.unlocked_agents.update({"agent_willow", "agent_wendy"})
+            self.state.current_story_node = "prologue_stage_1_unlocked"
+
+    def _update_story_unlocks(self) -> None:
+        stage_one_claims = {"claim_003", "claim_005", "claim_011"}
+        if len(self.state.discovered_claims.intersection(stage_one_claims)) >= 2:
+            self.state.unlocked_scenes.add("ruins_path")
+            self.state.unlocked_agents.add("agent_maxwell")
+            self.state.current_story_node = "prologue_stage_2_unlocked"
+
+    def story_progress(self) -> dict[str, Any]:
+        node = next((item for item in self.story_nodes if item["node_id"] == "prologue_camp_start"), {})
+        return {
+            "node_id": self.state.current_story_node,
+            "narration": node.get("narration", ""),
+            "completed_actions": sorted(self.state.story_actions_completed),
+            "required_actions": node.get("completion", {}).get("required_actions", 2),
+            "unlocked_scenes": sorted(self.state.unlocked_scenes),
+            "unlocked_agents": sorted(self.state.unlocked_agents),
+        }
 
     def seal(self) -> bool:
         if self.state.phase != "day" or self.state.status != "running":
@@ -105,4 +148,6 @@ class Game:
         save_state(self.snapshot())
 
     def snapshot(self) -> dict[str, Any]:
-        return self.state.to_dict()
+        snapshot = self.state.to_dict()
+        snapshot["story"] = self.story_progress()
+        return snapshot

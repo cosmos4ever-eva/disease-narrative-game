@@ -14,6 +14,10 @@ class GameState:
     status: str = "running"
     source_sealed: bool = False
     accused_agent_id: str | None = None
+    unlocked_scenes: set[str] = field(default_factory=lambda: {"camp"})
+    unlocked_agents: set[str] = field(default_factory=lambda: {"agent_wilson", "agent_wolfgang"})
+    story_actions_completed: set[str] = field(default_factory=set)
+    current_story_node: str = "prologue_camp_start"
     discovered_claims: set[str] = field(default_factory=set)
     discovered_items: set[str] = field(default_factory=set)
     npc_states: dict[str, dict[str, Any]] = field(default_factory=dict)
@@ -31,6 +35,10 @@ class GameState:
             "status": self.status,
             "source_sealed": self.source_sealed,
             "accused_agent_id": self.accused_agent_id,
+            "unlocked_scenes": sorted(self.unlocked_scenes),
+            "unlocked_agents": sorted(self.unlocked_agents),
+            "story_actions_completed": sorted(self.story_actions_completed),
+            "current_story_node": self.current_story_node,
             "discovered_claims": sorted(self.discovered_claims),
             "discovered_items": sorted(self.discovered_items),
             "npc_states": self.npc_states,
