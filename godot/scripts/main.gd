@@ -190,9 +190,11 @@ func render_scenes() -> void:
 		name.add_theme_font_size_override("font_size", 25)
 		content.add_child(name)
 		var move := Button.new()
-		move.text = "当前位置" if scene_id == state.get("current_scene", "") else "前往"
-		move.disabled = scene_id == state.get("current_scene", "")
-		move.pressed.connect(func() -> void: GameClient.move_to(scene_id))
+		var is_current := scene_id == state.get("current_scene", "")
+		var is_reachable := scene_id in scenes.get(state.get("current_scene", ""), {}).get("connections", [])
+		move.text = "当前位置" if is_current else ("前往" if is_reachable else "不可直达")
+		move.disabled = is_current or not is_reachable
+		move.pressed.connect(_on_move_pressed.bind(scene_id))
 		content.add_child(move)
 
 	for child in npc_list.get_children():
@@ -204,11 +206,16 @@ func render_scenes() -> void:
 	for agent_id in nearby_agents:
 		var npc_button := Button.new()
 		npc_button.text = agent_names.get(agent_id, agent_id)
-		npc_button.pressed.connect(func() -> void:
-			selected_agent_id = agent_id
-			dialogue_label.text = "你正在和 %s 对话。" % agent_names.get(agent_id, agent_id)
-		)
+		npc_button.pressed.connect(_on_npc_selected.bind(agent_id))
 		npc_list.add_child(npc_button)
+
+func _on_move_pressed(scene_id: String) -> void:
+	status_label.text = "正在前往 %s……" % scenes.get(scene_id, {}).get("name", scene_id)
+	GameClient.move_to(scene_id)
+
+func _on_npc_selected(agent_id: String) -> void:
+	selected_agent_id = agent_id
+	dialogue_label.text = "你正在和 %s 对话。" % agent_names.get(agent_id, agent_id)
 
 func _on_api_response(_result: int, response_code: int, _headers: PackedStringArray, body: PackedByteArray) -> void:
 	if response_code != 200:
@@ -228,7 +235,10 @@ func _on_api_response(_result: int, response_code: int, _headers: PackedStringAr
 		question_input.editable = true
 	elif parsed is Dictionary and parsed.has("valid"):
 		question_input.editable = true
-		GameClient.get_state()
+		if parsed["valid"]:
+			GameClient.get_state()
+		else:
+			status_label.text = parsed.get("impact", "这个场景目前无法到达。")
 
 func _ask_selected_agent() -> void:
 	if selected_agent_id == "" or question_input.text.strip_edges() == "":
