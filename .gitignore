@@ -7,3 +7,4 @@ __pycache__/
 saves/*.json
 godot/.godot/
 godot/**/*.uid
+godot/**/*.import
