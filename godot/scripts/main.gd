@@ -17,6 +17,7 @@ var npc_list: VBoxContainer
 var dialogue_label: Label
 var question_input: LineEdit
 var backdrop_text: Label
+var scene_art: TextureRect
 var story_text: Label
 var story_actions: HBoxContainer
 var selected_agent_id := ""
@@ -121,12 +122,23 @@ func build_shell() -> void:
 	backdrop.custom_minimum_size = Vector2(0, 150)
 	backdrop.add_theme_stylebox_override("panel", make_style(Color("#e8e2d8"), Color("#c8c0b5"), 1, 14))
 	column.add_child(backdrop)
+	var backdrop_root := Control.new()
+	backdrop_root.custom_minimum_size = Vector2(0, 150)
+	backdrop.add_child(backdrop_root)
+	scene_art = TextureRect.new()
+	scene_art.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	scene_art.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	scene_art.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_COVERED
+	scene_art.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	backdrop_root.add_child(scene_art)
 	backdrop_text = Label.new()
 	backdrop_text.name = "BackdropText"
+	backdrop_text.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	backdrop_text.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	backdrop_text.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	backdrop_text.add_theme_font_size_override("font_size", 36)
-	backdrop.add_child(backdrop_text)
+	backdrop_text.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	backdrop_root.add_child(backdrop_text)
 
 	scene_grid = HBoxContainer.new()
 	scene_grid.add_theme_constant_override("separation", 16)
@@ -264,6 +276,7 @@ func _on_api_response(_result: int, response_code: int, _headers: PackedStringAr
 		description_label.text = scenes.get(state.get("current_scene", "camp"), {}).get("description", "")
 		render_scenes()
 		backdrop_text.text = "%s  %s" % [scenes.get(state.get("current_scene", "camp"), {}).get("symbol", ""), scenes.get(state.get("current_scene", "camp"), {}).get("name", "")]
+		render_scene_art(state.get("current_scene", "camp"))
 	elif parsed is Dictionary and parsed.has("dialogue"):
 		dialogue_label.text = parsed["dialogue"]
 		question_input.editable = true
@@ -300,6 +313,17 @@ func render_story(story: Dictionary) -> void:
 		action_button.disabled = action_id in story.get("completed_actions", []) or state.get("phase") != "day"
 		action_button.pressed.connect(Callable(self, "_on_story_action").bind(action_id))
 		story_actions.add_child(action_button)
+
+func render_scene_art(scene_id: String) -> void:
+	var path := "res://assets/scenes/%s.png" % scene_id
+	if ResourceLoader.exists(path):
+		scene_art.texture = load(path)
+		scene_art.visible = true
+		backdrop_text.visible = false
+	else:
+		scene_art.texture = null
+		scene_art.visible = false
+		backdrop_text.visible = true
 
 func _on_story_action(action_id: String) -> void:
 	status_label.text = "正在推进剧情……"
