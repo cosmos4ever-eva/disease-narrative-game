@@ -52,12 +52,12 @@ class Game:
             return {"valid": False, "impact": "你已经在这个场景。"}
         if scene_id not in self.scenes[self.state.current_scene]["connections"]:
             return {"valid": False, "impact": "这个场景目前无法直接到达。"}
-        if not consume_action(self.state):
+        if self.state.phase != "day" or self.state.status != "running":
             return {"valid": False, "impact": "当前无法移动。"}
         previous = self.state.current_scene
         self.state.current_scene = scene_id
         self.state.event_log.append({"type": "move", "from": previous, "to": scene_id})
-        self._finish_action()
+        save_state(self.snapshot())
         return {"valid": True, "from": previous, "to": scene_id}
 
     def seal(self) -> bool:

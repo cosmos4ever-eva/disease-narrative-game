@@ -193,7 +193,7 @@ func render_scenes() -> void:
 		var move := Button.new()
 		var is_current: bool = scene_id == state.get("current_scene", "")
 		var is_reachable: bool = scene_id in scenes.get(state.get("current_scene", ""), {}).get("connections", [])
-		move.text = "当前位置" if is_current else ("前往（消耗 1 点）" if is_reachable else "不可直达")
+		move.text = "当前位置" if is_current else ("前往（不消耗行动力）" if is_reachable else "不可直达")
 		move.disabled = is_current or not is_reachable
 		var target_scene_id: String = scene_id
 		move.pressed.connect(Callable(self, "_on_move_pressed").bind(target_scene_id))

@@ -70,12 +70,12 @@ def test_invalid_claim_does_not_consume_action_point():
     assert game.snapshot()["action_points"] == 3
 
 
-def test_move_requires_connected_scene_and_consumes_action_point():
+def test_move_requires_connected_scene_without_consuming_action_point():
     game = Game(seed=123)
     result = game.move_to("forest_edge")
     assert result["valid"] is True
     assert game.snapshot()["current_scene"] == "forest_edge"
-    assert game.snapshot()["action_points"] == 2
+    assert game.snapshot()["action_points"] == 3
 
 
 def test_dialogue_requires_npc_in_current_scene():
