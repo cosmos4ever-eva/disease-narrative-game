@@ -190,8 +190,8 @@ func render_scenes() -> void:
 		name.add_theme_font_size_override("font_size", 25)
 		content.add_child(name)
 		var move := Button.new()
-		var is_current := scene_id == state.get("current_scene", "")
-		var is_reachable := scene_id in scenes.get(state.get("current_scene", ""), {}).get("connections", [])
+		var is_current: bool = scene_id == state.get("current_scene", "")
+		var is_reachable: bool = scene_id in scenes.get(state.get("current_scene", ""), {}).get("connections", [])
 		move.text = "当前位置" if is_current else ("前往" if is_reachable else "不可直达")
 		move.disabled = is_current or not is_reachable
 		move.pressed.connect(_on_move_pressed.bind(scene_id))
