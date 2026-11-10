@@ -148,10 +148,11 @@ func build_shell() -> void:
 	dialogue_label.add_theme_font_size_override("font_size", 19)
 	dialogue_column.add_child(dialogue_label)
 	question_input = LineEdit.new()
-	question_input.placeholder_text = "输入你想问的问题"
+	question_input.placeholder_text = "输入问题（打字不消耗行动力）"
+	question_input.tooltip_text = "输入文字不会消耗行动力，发送问题时消耗 1 点。"
 	dialogue_column.add_child(question_input)
 	var ask_button := Button.new()
-	ask_button.text = "发送问题"
+	ask_button.text = "发送问题（消耗 1 点行动力）"
 	ask_button.pressed.connect(_ask_selected_agent)
 	dialogue_column.add_child(ask_button)
 
@@ -192,7 +193,7 @@ func render_scenes() -> void:
 		var move := Button.new()
 		var is_current: bool = scene_id == state.get("current_scene", "")
 		var is_reachable: bool = scene_id in scenes.get(state.get("current_scene", ""), {}).get("connections", [])
-		move.text = "当前位置" if is_current else ("前往" if is_reachable else "不可直达")
+		move.text = "当前位置" if is_current else ("前往（消耗 1 点）" if is_reachable else "不可直达")
 		move.disabled = is_current or not is_reachable
 		var target_scene_id: String = scene_id
 		move.pressed.connect(Callable(self, "_on_move_pressed").bind(target_scene_id))
@@ -208,7 +209,7 @@ func render_scenes() -> void:
 	for agent_id in nearby_agents:
 		var npc_button := Button.new()
 		var target_agent_id: String = agent_id
-		npc_button.text = agent_names.get(target_agent_id, target_agent_id)
+		npc_button.text = "%s（对话消耗 1 点）" % agent_names.get(target_agent_id, target_agent_id)
 		npc_button.focus_mode = Control.FOCUS_ALL
 		npc_button.pressed.connect(Callable(self, "_on_npc_selected").bind(target_agent_id))
 		npc_button.focus_entered.connect(Callable(self, "_on_npc_selected").bind(target_agent_id))
@@ -223,7 +224,7 @@ func _on_scene_focus(scene_id: String) -> void:
 
 func _on_npc_selected(agent_id: String) -> void:
 	selected_agent_id = agent_id
-	dialogue_label.text = "你正在和 %s 对话。请输入问题。" % agent_names.get(agent_id, agent_id)
+	dialogue_label.text = "你正在和 %s 对话。选择角色不消耗行动力；点击发送问题才消耗 1 点。" % agent_names.get(agent_id, agent_id)
 	question_input.grab_focus()
 
 func _on_api_response(_result: int, response_code: int, _headers: PackedStringArray, body: PackedByteArray) -> void:
