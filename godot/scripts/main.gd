@@ -194,7 +194,9 @@ func render_scenes() -> void:
 		var is_reachable: bool = scene_id in scenes.get(state.get("current_scene", ""), {}).get("connections", [])
 		move.text = "当前位置" if is_current else ("前往" if is_reachable else "不可直达")
 		move.disabled = is_current or not is_reachable
-		move.pressed.connect(_on_move_pressed.bind(scene_id))
+		var target_scene_id: String = scene_id
+		move.pressed.connect(Callable(self, "_on_move_pressed").bind(target_scene_id))
+		move.focus_entered.connect(Callable(self, "_on_scene_focus").bind(target_scene_id))
 		content.add_child(move)
 
 	for child in npc_list.get_children():
@@ -205,14 +207,19 @@ func render_scenes() -> void:
 			nearby_agents.append(agent_id)
 	for agent_id in nearby_agents:
 		var npc_button := Button.new()
-		npc_button.text = agent_names.get(agent_id, agent_id)
+		var target_agent_id: String = agent_id
+		npc_button.text = agent_names.get(target_agent_id, target_agent_id)
 		npc_button.focus_mode = Control.FOCUS_ALL
-		npc_button.pressed.connect(_on_npc_selected.bind(agent_id))
+		npc_button.pressed.connect(Callable(self, "_on_npc_selected").bind(target_agent_id))
+		npc_button.focus_entered.connect(Callable(self, "_on_npc_selected").bind(target_agent_id))
 		npc_list.add_child(npc_button)
 
 func _on_move_pressed(scene_id: String) -> void:
 	status_label.text = "正在前往 %s……" % scenes.get(scene_id, {}).get("name", scene_id)
 	GameClient.move_to(scene_id)
+
+func _on_scene_focus(scene_id: String) -> void:
+	status_label.text = "已选择前往 %s，点击按钮确认移动。" % scenes.get(scene_id, {}).get("name", scene_id)
 
 func _on_npc_selected(agent_id: String) -> void:
 	selected_agent_id = agent_id
