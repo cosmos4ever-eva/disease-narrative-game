@@ -16,6 +16,7 @@ var description_label: Label
 var npc_list: VBoxContainer
 var dialogue_label: Label
 var question_input: LineEdit
+var backdrop_text: Label
 var selected_agent_id := ""
 var agent_names := {
 	"agent_wilson": "Wilson",
@@ -26,9 +27,45 @@ var agent_names := {
 }
 
 func _ready() -> void:
+	apply_light_theme()
 	build_shell()
 	GameClient.http.request_completed.connect(_on_api_response)
 	GameClient.get_state()
+
+func apply_light_theme() -> void:
+	var ui_theme := Theme.new()
+	ui_theme.set_color("font_color", "Label", Color("#2d2a27"))
+	ui_theme.set_color("font_color", "Button", Color("#2d2a27"))
+	ui_theme.set_color("font_hover_color", "Button", Color.WHITE)
+	ui_theme.set_color("font_pressed_color", "Button", Color.WHITE)
+	ui_theme.set_color("font_disabled_color", "Button", Color("#8e8a84"))
+	ui_theme.set_color("font_color", "LineEdit", Color("#2d2a27"))
+	ui_theme.set_color("font_placeholder_color", "LineEdit", Color("#8e8a84"))
+	ui_theme.set_stylebox("normal", "Button", make_style(Color("#fffdf8"), Color("#c8c0b5"), 1, 10))
+	ui_theme.set_stylebox("hover", "Button", make_style(Color("#8b5e34"), Color("#8b5e34"), 1, 10))
+	ui_theme.set_stylebox("pressed", "Button", make_style(Color("#6c4527"), Color("#6c4527"), 1, 10))
+	ui_theme.set_stylebox("disabled", "Button", make_style(Color("#e1ded8"), Color("#d0cbc3"), 1, 10))
+	ui_theme.set_stylebox("normal", "LineEdit", make_style(Color("#fffdf8"), Color("#c8c0b5"), 1, 8))
+	ui_theme.set_stylebox("focus", "LineEdit", make_style(Color("#fffdf8"), Color("#8b5e34"), 2, 8))
+	theme = ui_theme
+
+func make_style(background: Color, border: Color, border_width: int, radius: int) -> StyleBoxFlat:
+	var style := StyleBoxFlat.new()
+	style.bg_color = background
+	style.border_color = border
+	style.border_width_left = border_width
+	style.border_width_top = border_width
+	style.border_width_right = border_width
+	style.border_width_bottom = border_width
+	style.corner_radius_top_left = radius
+	style.corner_radius_top_right = radius
+	style.corner_radius_bottom_left = radius
+	style.corner_radius_bottom_right = radius
+	style.content_margin_left = 12
+	style.content_margin_right = 12
+	style.content_margin_top = 8
+	style.content_margin_bottom = 8
+	return style
 
 func build_shell() -> void:
 	var background := ColorRect.new()
@@ -63,8 +100,9 @@ func build_shell() -> void:
 
 	var backdrop := PanelContainer.new()
 	backdrop.custom_minimum_size = Vector2(0, 150)
+	backdrop.add_theme_stylebox_override("panel", make_style(Color("#e8e2d8"), Color("#c8c0b5"), 1, 14))
 	column.add_child(backdrop)
-	var backdrop_text := Label.new()
+	backdrop_text = Label.new()
 	backdrop_text.name = "BackdropText"
 	backdrop_text.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	backdrop_text.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
@@ -81,6 +119,7 @@ func build_shell() -> void:
 
 	var evidence_panel := PanelContainer.new()
 	evidence_panel.custom_minimum_size = Vector2(360, 260)
+	evidence_panel.add_theme_stylebox_override("panel", make_style(Color("#f4efe6"), Color("#d9d0c4"), 1, 12))
 	lower.add_child(evidence_panel)
 	var evidence_column := VBoxContainer.new()
 	evidence_panel.add_child(evidence_column)
@@ -93,6 +132,7 @@ func build_shell() -> void:
 
 	var dialogue_panel := PanelContainer.new()
 	dialogue_panel.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	dialogue_panel.add_theme_stylebox_override("panel", make_style(Color("#f4efe6"), Color("#d9d0c4"), 1, 12))
 	lower.add_child(dialogue_panel)
 	var dialogue_column := VBoxContainer.new()
 	dialogue_panel.add_child(dialogue_column)
@@ -172,6 +212,7 @@ func render_scenes() -> void:
 func _on_api_response(_result: int, response_code: int, _headers: PackedStringArray, body: PackedByteArray) -> void:
 	if response_code != 200:
 		status_label.text = "后端连接失败：" + str(response_code)
+		question_input.editable = true
 		return
 	var parsed = JSON.parse_string(body.get_string_from_utf8())
 	if parsed is Dictionary and parsed.has("npc_states"):
@@ -180,12 +221,12 @@ func _on_api_response(_result: int, response_code: int, _headers: PackedStringAr
 		status_label.text = "第 %d 天 · %s · 行动力 %d/%d · 当前场景：%s" % [state.get("day", 1), "白天" if state.get("phase") == "day" else "夜晚", state.get("action_points", 0), state.get("max_action_points", 3), state.get("current_scene", "camp")]
 		description_label.text = scenes.get(state.get("current_scene", "camp"), {}).get("description", "")
 		render_scenes()
-		var backdrop_text := get_node_or_null("MarginContainer/VBoxContainer/PanelContainer/BackdropText")
-		if backdrop_text:
-			backdrop_text.text = "%s  %s" % [scenes.get(state.get("current_scene", "camp"), {}).get("symbol", ""), scenes.get(state.get("current_scene", "camp"), {}).get("name", "")]
+		backdrop_text.text = "%s  %s" % [scenes.get(state.get("current_scene", "camp"), {}).get("symbol", ""), scenes.get(state.get("current_scene", "camp"), {}).get("name", "")]
 	elif parsed is Dictionary and parsed.has("dialogue"):
 		dialogue_label.text = parsed["dialogue"]
+		question_input.editable = true
 	elif parsed is Dictionary and parsed.has("valid"):
+		question_input.editable = true
 		GameClient.get_state()
 
 func _ask_selected_agent() -> void:
@@ -193,6 +234,7 @@ func _ask_selected_agent() -> void:
 		dialogue_label.text = "请先选择一个 NPC，并输入问题。"
 		return
 	dialogue_label.text = "对方正在回忆……"
+	question_input.editable = false
 	GameClient.ask(selected_agent_id, question_input.text.strip_edges())
 	question_input.clear()
 
