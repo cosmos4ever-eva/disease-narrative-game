@@ -1,0 +1,67 @@
+[
+  {
+    "node_id": "prologue_camp_start",
+    "chapter": "prologue",
+    "title": "营火不向光亮靠近",
+    "scene_id": "camp",
+    "narration": "营火还没有熄灭，但 Wilson 的实验台旁已经没有光了。\n\n他把一盏油灯移近玻璃瓶。瓶中的黑色孢子向阴影里缩去，像是在躲避他的目光。",
+    "dialogue": {
+      "agent_wilson": "这东西刚才还在瓶底。我不知道它是什么，但我知道它不该这样移动。",
+      "agent_wolfgang": "我没有看清！真的没有！但昨晚有人从森林方向回来，手里像是拿着一个黑色的箱子。"
+    },
+    "available_actions": [
+      "ask_wilson",
+      "inspect_lab",
+      "ask_wolfgang"
+    ],
+    "completion": {
+      "type": "count",
+      "required_actions": 2,
+      "unlock_scenes": ["forest_edge", "graveyard"],
+      "unlock_agents": ["agent_willow", "agent_wendy"]
+    }
+  },
+  {
+    "node_id": "prologue_ask_wilson",
+    "parent_node": "prologue_camp_start",
+    "scene_id": "camp",
+    "action_id": "ask_wilson",
+    "narration": "Wilson 没有立刻回答。他先把油灯移远了一点，确认瓶中的黑色粉末又开始缓慢聚拢。",
+    "agent_id": "agent_wilson",
+    "agent_intent": "cautious_cooperation",
+    "revealed_claims": ["claim_004"],
+    "memory_updates": ["mem_player_inspected_wilson_evidence"],
+    "unlocks": ["evidence_black_spore_behavior"]
+  },
+  {
+    "node_id": "prologue_inspect_lab",
+    "parent_node": "prologue_camp_start",
+    "scene_id": "camp",
+    "action_id": "inspect_lab",
+    "narration": "实验台上有三只玻璃瓶。前两只瓶底沉着普通的灰色霉菌，第三只瓶子的黑色粉末却贴着阴影移动。",
+    "evidence": [
+      {
+        "evidence_id": "evidence_black_spore_behavior",
+        "content": "黑色孢子会躲避光线",
+        "supports_claims": ["claim_004", "claim_008"]
+      }
+    ],
+    "memory_updates": ["mem_player_inspected_lab"],
+    "unlocks": ["claim_004"]
+  },
+  {
+    "node_id": "prologue_ask_wolfgang",
+    "parent_node": "prologue_camp_start",
+    "scene_id": "camp",
+    "action_id": "ask_wolfgang",
+    "narration": "Wolfgang 把声音压得很低。他的手指一直抓着衣角，没有出现明显的病症，只是不停回头看向森林。",
+    "agent_id": "agent_wolfgang",
+    "agent_intent": "spread_suspicion",
+    "revealed_claims": ["claim_001", "claim_002"],
+    "false_target": "agent_willow",
+    "subjective_confidence": 0.55,
+    "infection_state_hidden": "latent",
+    "memory_updates": ["mem_player_heard_wolfgang_testimony"],
+    "unlocks": ["suspicion_willow"]
+  }
+]
