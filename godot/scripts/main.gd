@@ -70,6 +70,7 @@ func make_style(background: Color, border: Color, border_width: int, radius: int
 func build_shell() -> void:
 	var background := ColorRect.new()
 	background.color = Color("#fbfaf7")
+	background.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	background.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	add_child(background)
 
