@@ -209,7 +209,7 @@ func render_scenes() -> void:
 	for agent_id in nearby_agents:
 		var npc_button := Button.new()
 		var target_agent_id: String = agent_id
-		npc_button.text = "%s（对话消耗 1 点）" % agent_names.get(target_agent_id, target_agent_id)
+		npc_button.text = "%s（选择，不消耗）" % agent_names.get(target_agent_id, target_agent_id)
 		npc_button.focus_mode = Control.FOCUS_ALL
 		npc_button.pressed.connect(Callable(self, "_on_npc_selected").bind(target_agent_id))
 		npc_button.focus_entered.connect(Callable(self, "_on_npc_selected").bind(target_agent_id))
