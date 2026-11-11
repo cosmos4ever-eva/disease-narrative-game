@@ -86,20 +86,20 @@ func build_shell() -> void:
 	var margin := MarginContainer.new()
 	margin.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	margin.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	margin.add_theme_constant_override("margin_left", 56)
-	margin.add_theme_constant_override("margin_right", 56)
-	margin.add_theme_constant_override("margin_top", 38)
-	margin.add_theme_constant_override("margin_bottom", 38)
+	margin.add_theme_constant_override("margin_left", 42)
+	margin.add_theme_constant_override("margin_right", 42)
+	margin.add_theme_constant_override("margin_top", 28)
+	margin.add_theme_constant_override("margin_bottom", 28)
 	scroll.add_child(margin)
 
 	var column := VBoxContainer.new()
 	column.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	column.add_theme_constant_override("separation", 18)
+	column.add_theme_constant_override("separation", 12)
 	margin.add_child(column)
 
 	var title := Label.new()
 	title.text = "暗影疫病：第一夜"
-	title.add_theme_font_size_override("font_size", 40)
+	title.add_theme_font_size_override("font_size", 36)
 	column.add_child(title)
 
 	status_label = Label.new()
@@ -119,11 +119,11 @@ func build_shell() -> void:
 	column.add_child(story_actions)
 
 	var backdrop := PanelContainer.new()
-	backdrop.custom_minimum_size = Vector2(0, 150)
+	backdrop.custom_minimum_size = Vector2(0, 680)
 	backdrop.add_theme_stylebox_override("panel", make_style(Color("#e8e2d8"), Color("#c8c0b5"), 1, 14))
 	column.add_child(backdrop)
 	var backdrop_root := Control.new()
-	backdrop_root.custom_minimum_size = Vector2(0, 150)
+	backdrop_root.custom_minimum_size = Vector2(0, 680)
 	backdrop.add_child(backdrop_root)
 	scene_art = TextureRect.new()
 	scene_art.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
