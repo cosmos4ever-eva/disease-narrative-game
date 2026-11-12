@@ -210,10 +210,20 @@ func render_scenes() -> void:
 		var content := VBoxContainer.new()
 		content.add_theme_constant_override("separation", 10)
 		card.add_child(content)
+		var thumbnail := TextureRect.new()
+		thumbnail.custom_minimum_size = Vector2(0, 112)
+		thumbnail.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+		thumbnail.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_COVERED
+		thumbnail.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		var scene_art_path := "res://assets/scenes/%s.png" % scene_id
+		if ResourceLoader.exists(scene_art_path):
+			thumbnail.texture = load(scene_art_path)
+			content.add_child(thumbnail)
 		var icon := Label.new()
 		icon.text = scene.get("symbol", "•")
 		icon.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 		icon.add_theme_font_size_override("font_size", 42)
+		icon.visible = thumbnail.texture == null
 		content.add_child(icon)
 		var name := Label.new()
 		name.text = scene.get("name", scene_id)
