@@ -11,6 +11,7 @@ const SCENE_COLORS := {
 var state: Dictionary = {}
 var scenes: Dictionary = {}
 var scene_grid: HBoxContainer
+var scroll_container: ScrollContainer
 var status_label: Label
 var description_label: Label
 var npc_list: VBoxContainer
@@ -77,11 +78,11 @@ func build_shell() -> void:
 	background.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	add_child(background)
 
-	var scroll := ScrollContainer.new()
-	scroll.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
-	scroll.vertical_scroll_mode = ScrollContainer.SCROLL_MODE_AUTO
-	add_child(scroll)
+	scroll_container = ScrollContainer.new()
+	scroll_container.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	scroll_container.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	scroll_container.vertical_scroll_mode = ScrollContainer.SCROLL_MODE_AUTO
+	add_child(scroll_container)
 
 	var margin := MarginContainer.new()
 	margin.size_flags_horizontal = Control.SIZE_EXPAND_FILL
@@ -90,7 +91,7 @@ func build_shell() -> void:
 	margin.add_theme_constant_override("margin_right", 42)
 	margin.add_theme_constant_override("margin_top", 28)
 	margin.add_theme_constant_override("margin_bottom", 28)
-	scroll.add_child(margin)
+	scroll_container.add_child(margin)
 
 	var column := VBoxContainer.new()
 	column.size_flags_horizontal = Control.SIZE_EXPAND_FILL
@@ -270,6 +271,7 @@ func _on_api_response(_result: int, response_code: int, _headers: PackedStringAr
 	var parsed = JSON.parse_string(body.get_string_from_utf8())
 	if parsed is Dictionary and parsed.has("npc_states"):
 		state = parsed
+		scroll_container.scroll_vertical = 0
 		scenes = load_scene_data()
 		render_story(parsed.get("story", {}))
 		status_label.text = "第 %d 天 · %s · 行动力 %d/%d · 当前场景：%s" % [state.get("day", 1), "白天" if state.get("phase") == "day" else "夜晚", state.get("action_points", 0), state.get("max_action_points", 3), state.get("current_scene", "camp")]
